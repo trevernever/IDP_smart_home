@@ -58,18 +58,19 @@ void loop() {
     
   }
 
-  float night_read = (analogRead(Night_in) / 1024);
-  Serial.println(night_read);
+  int night_read = analogRead(Night_in);
+  int light_threshold = 642;
+  //Serial.println(night_read);
 
-  //if(analog_read <= (2/3)){
+  if(night_read < light_threshold){
 
-    //digitalWrite(Night_pin, HIGH); 
+    digitalWrite(Night_pin, HIGH); 
 
-  //}
-  //else{
+  }
+  else{
 
-    //digitalWrite(Night_pin, LOW);
+    digitalWrite(Night_pin, LOW);
     
-  //}
+  }
   
 }
