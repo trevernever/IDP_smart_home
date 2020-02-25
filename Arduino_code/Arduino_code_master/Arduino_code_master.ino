@@ -1,7 +1,7 @@
 #include <SoftwareSerial.h>
 
-SoftwareSerial BTSerial(0,1); // RX, TX
-SoftwareSerial SlaveSerial(13,12);
+SoftwareSerial BTSerial(0,1); // RX , TX
+SoftwareSerial SlaveSerial(12,13); // RX , TX
 
 String BT_comm;
 String Slave_comm;
