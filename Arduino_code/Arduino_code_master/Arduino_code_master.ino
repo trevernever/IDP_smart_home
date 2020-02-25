@@ -1,10 +1,10 @@
 #include <SoftwareSerial.h>
-#include <LiquidCrystal.h>
 
 SoftwareSerial BTSerial(0,1); // RX, TX
-//LiquidCrystal lcd();
+SoftwareSerial SlaveSerial(13,12);
 
-String comm;
+String BT_comm;
+String Slave_comm;
 int LED_pin = 3;
 int Night_pin = 4;
 int Night_in = A4;
@@ -27,26 +27,35 @@ void setup() {
 
 void loop() {
   
-  while(Serial.available()){
+  while(BTSerial.available()){
 
     delay(10);
     char c = Serial.read();
-    comm += c;
+    BT_comm += c;
     
   }
-  if(comm == "on"){
+  
+  while(SlaveSerial.available()){
+
+    delay(10);
+    char c = Serial.read();
+    Slave_comm += c;
+    
+  }
+  
+  if(BT_comm == "on"){
 
     digitalWrite(LED_pin, HIGH);
     
   }
-  else if(comm == "off"){
+  else if(BT_comm == "off"){
 
     digitalWrite(LED_pin,LOW);
     
   }
   
-  Serial.print(comm);
-  comm = "";
+  Serial.print(BT_comm);
+  BT_comm = "";
 
   float analog_read = (analogRead(Therm_in) / 204.6);
 
