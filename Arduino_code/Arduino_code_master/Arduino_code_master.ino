@@ -16,8 +16,6 @@ void setup() {
   Serial.begin(9600);
   BTSerial.begin(9600);
   
-  comm = "";
-  
   pinMode(LED_pin, OUTPUT);
   pinMode(Night_pin, OUTPUT);
   pinMode(Night_in, INPUT);
