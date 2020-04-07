@@ -9,7 +9,10 @@ int LED_pin = 3;
 int Night_pin = 4;
 int Night_in = A4;
 int Therm_in = A5;
-int Temperature;
+int Motion_in = A2;
+int Temperature = 0;
+int oldTemp = 0;
+bool armed = false;
 
 void setup() {
 
@@ -20,6 +23,7 @@ void setup() {
   pinMode(Night_pin, OUTPUT);
   pinMode(Night_in, INPUT);
   pinMode(Therm_in, INPUT);
+  pinMode(Motion_in, INPUT);
 
 }
 
@@ -28,40 +32,46 @@ void loop() {
   while(BTSerial.available()){
 
     delay(10);
-    char c = Serial.read();
+    char c = BTSerial.read();
     BT_comm += c;
     
   }
   
-  while(SlaveSerial.available()){
+  //while(SlaveSerial.available()){
 
-    delay(10);
-    char c = Serial.read();
-    Slave_comm += c;
+    //delay(10);
+   // char c = Serial.read();
+    //Slave_comm += c;
     
-  }
+  //}
   
   if(BT_comm == "on"){
-
+    Serial.println(BT_comm);
     digitalWrite(LED_pin, HIGH);
     
   }
   else if(BT_comm == "off"){
-
+    Serial.println(BT_comm);
     digitalWrite(LED_pin,LOW);
     
   }
   
-  Serial.print(BT_comm);
+  //Serial.print(BT_comm);
   BT_comm = "";
 
   float analog_read = (analogRead(Therm_in) / 204.6);
 
   if(analog_read >= 0.1){
     
-    Temperature = ((analog_read - 0.5) * 100);
+    Temperature = (int)((analog_read - 0.5) * 100);
     //Serial.println(Temperature);
-    //BTSerial.print(Temperature);
+    if(Temperature != oldTemp){
+
+      oldTemp = Temperature;
+      String ret = String(Temperature,0) + "C";
+      BTSerial.print(ret);
+      
+    }
     
   }
 
@@ -79,5 +89,20 @@ void loop() {
     digitalWrite(Night_pin, LOW);
     
   }
+
+
+  if(armed){
+
+    int motion_read = analogRead(Motion_in);
+    //Serial.println(motion_read);
+    if(motion_read > 660){
+
+      //sound alarm
+       
+    }
+    
+  }
+
+  delay(100);
   
 }
