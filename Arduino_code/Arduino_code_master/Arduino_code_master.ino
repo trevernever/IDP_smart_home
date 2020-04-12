@@ -37,13 +37,23 @@ void loop() {
     
   }
   
-  //while(SlaveSerial.available()){
+  while(SlaveSerial.available()){
 
-    //delay(10);
-   // char c = Serial.read();
-    //Slave_comm += c;
+    delay(10);
+    char c = SlaveSerial.read();
+    Slave_comm += c;
     
-  //}
+  }
+  Serial.println(Slave_comm);
+
+  while(Serial.available()){
+
+    delay(10);
+    char c = Serial.read();
+    To_Slave_comm += c;
+    
+  }
+  SlaveSerial.println(To_Slave_comm);
   
   if(BT_comm == "on"){
     Serial.println(BT_comm);
