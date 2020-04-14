@@ -5,6 +5,7 @@ SoftwareSerial SlaveSerial(12,13); // RX , TX
 
 String BT_comm;
 String Slave_comm;
+String To_Slave_comm;
 int LED_pin = 3;
 int Night_pin = 4;
 int Night_in = A4;
@@ -17,6 +18,7 @@ bool armed = false;
 void setup() {
 
   Serial.begin(9600);
+  SlaveSerial.begin(9600);
   BTSerial.begin(9600);
   
   pinMode(LED_pin, OUTPUT);
@@ -36,15 +38,6 @@ void loop() {
     BT_comm += c;
     
   }
-  
-  while(SlaveSerial.available()){
-
-    delay(10);
-    char c = SlaveSerial.read();
-    Slave_comm += c;
-    
-  }
-  Serial.println(Slave_comm);
 
   while(Serial.available()){
 
@@ -53,8 +46,24 @@ void loop() {
     To_Slave_comm += c;
     
   }
-  SlaveSerial.println(To_Slave_comm);
-  
+
+  if(To_Slave_comm.length() > 0){
+    SlaveSerial.print(To_Slave_comm);
+    Serial.print(To_Slave_comm);
+  }
+  To_Slave_comm = "";
+
+  while(SlaveSerial.available()){
+
+    delay(10);
+    char c = SlaveSerial.read();
+    Slave_comm += c;
+    
+  }
+  if(Slave_comm.length() > 0){
+    Serial.println(Slave_comm);
+  }
+ 
   if(BT_comm == "on"){
     Serial.println(BT_comm);
     digitalWrite(LED_pin, HIGH);
@@ -74,6 +83,7 @@ void loop() {
   if(analog_read >= 0.1){
     
     Temperature = (int)((analog_read - 0.5) * 100);
+    //SlaveSerial.print(Temperature);
     //Serial.println(Temperature);
     if(Temperature != oldTemp){
 
@@ -113,6 +123,5 @@ void loop() {
     
   }
 
-  delay(100);
-  
+  delay(10);
 }
