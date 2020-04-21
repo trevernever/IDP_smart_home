@@ -1,26 +1,42 @@
+////////////////////////////////////////////////
+//////////SECTION 1 - constants/////////////////
+////////////////////////////////////////////////
+
+//including all external libraries
 #include <SoftwareSerial.h>
 
+//defining objects to be used within the code
 SoftwareSerial BTSerial(0,1); // RX , TX
 SoftwareSerial SlaveSerial(12,13); // RX , TX
 
-String BT_comm;
-String Slave_comm;
-String To_Slave_comm;
-int LED_pin = 3;
-int Night_pin = 4;
-int Night_in = A4;
-int Therm_in = A5;
-int Motion_in = A2;
-int Temperature = 0;
+//constants - pin numbers
+#define LED_pin 3
+#define Night_pin 4
+#define Night_in A4
+#define Therm_in A5
+#define Motion_in A2
+
+//constants - thresholds
+#define light_threshold 3.3f
+#define motion_threshold 3.2f
+
+//global variables, things that can change, but must be stored
 int oldTemp = 0;
 bool armed = false;
 
+
+
+///////////////////////////////////////////////
+///////////////Section 2 set up////////////////
+///////////////////////////////////////////////
 void setup() {
 
+//setting up the objects for use later in the code
   Serial.begin(9600);
   SlaveSerial.begin(9600);
   BTSerial.begin(9600);
-  
+
+//setting pinmode, output or input
   pinMode(LED_pin, OUTPUT);
   pinMode(Night_pin, OUTPUT);
   pinMode(Night_in, INPUT);
@@ -29,92 +45,159 @@ void setup() {
 
 }
 
+
+
+/////////////////////////////////////////////
+////////////////program loop/////////////////
+/////////////////////////////////////////////
+
+/////////////////////////////////////////////
+//////////section 3 - communication//////////
+/////////////////////////////////////////////
 void loop() {
-  
-  while(BTSerial.available()){
 
-    delay(10);
-    char c = BTSerial.read();
-    BT_comm += c;
-    
-  }
+//defining local variables for communication
+String BT_comm;
+String Slave_comm;
+String To_Slave_comm;
 
+
+
+///////////////////////
+////master board///////
+///////////////////////
+
+//loops while data is available from this arduino
   while(Serial.available()){
-
     delay(10);
-    char c = Serial.read();
-    To_Slave_comm += c;
-    
+    To_Slave_comm += Serial.read(); //retreives data from this arduino
   }
-
+//determines if data was received
   if(To_Slave_comm.length() > 0){
-    SlaveSerial.print(To_Slave_comm);
-    Serial.print(To_Slave_comm);
+    SlaveSerial.print(To_Slave_comm); //sends the data to slave board
   }
-  To_Slave_comm = "";
 
+
+
+///////////////////////
+//////slave board//////
+///////////////////////
+
+//loops while data is avaliable from the slave arduino
   while(SlaveSerial.available()){
-
     delay(10);
-    char c = SlaveSerial.read();
-    Slave_comm += c;
-    
+    Slave_comm += SlaveSerial.read(); //retreives data from the slave arduino
   }
+//determines if data was recieved from the slave board
   if(Slave_comm.length() > 0){
-    Serial.println(Slave_comm);
+    Serial.println(Slave_comm); //prints the data from the slave board
   }
- 
+
+
+
+///////////////////////
+////bluetooth board////
+///////////////////////
+
+//loops while data is available from the bluetooth board
+  while(BTSerial.available()){
+    delay(10);
+    BT_comm += BTSerial.read(); //receives data from blutooth board
+  }
+
+
+
+////////////////////////////
+//blutooth command actions//
+////////////////////////////
+
+//if received string is "on" turn light on
   if(BT_comm == "on"){
     Serial.println(BT_comm);
     digitalWrite(LED_pin, HIGH);
-    
   }
+  
+//if received string is "off" turn light off
   else if(BT_comm == "off"){
     Serial.println(BT_comm);
     digitalWrite(LED_pin,LOW);
-    
   }
-  
-  //Serial.print(BT_comm);
-  BT_comm = "";
 
-  float analog_read = (analogRead(Therm_in) / 204.6);
 
-  if(analog_read >= 0.1){
-    
-    Temperature = (int)((analog_read - 0.5) * 100);
-    //SlaveSerial.print(Temperature);
-    //Serial.println(Temperature);
+
+////////////////////////////////////////////////////////
+////////////////section 4 - appliances//////////////////
+////////////////////////////////////////////////////////
+
+////////////////////////////
+//temperature reading///////
+////////////////////////////
+
+      //reads the output of the thermistor and converts it to voltage
+      //between 0 and 5. reading input reads as 0 - 1023, so dividing
+      //by 204.6 will convert this value to its corresponding voltage
+      //reading
+  float therm_read = (analogRead(Therm_in) / 204.6);
+
+        //minimum output of thermistor is 0.1, if lower, something is wrong
+        //makes sure the read value is acceptable
+  if(therm_read >= 0.1){
+
+          //converts voltage reading to a temperature
+          //equation taken from graph in thermistor datasheet
+    int Temperature = (int)((therm_read - 0.5) * 100);
+
+          //determines if temperature has changed (whole numbers)
     if(Temperature != oldTemp){
 
-      oldTemp = Temperature;
-      String ret = String(Temperature,0) + "C";
-      BTSerial.print(ret);
+      oldTemp = Temperature; //stores changed temperature value
+      String ret = String(Temperature,0) + "C"; //creates string to send to bluetooth board
+      BTSerial.print(ret); //sends new temperature to bluetooth board
       
     }
     
   }
 
-  int night_read = analogRead(Night_in);
-  int light_threshold = 642;
-  //Serial.println(night_read);
 
+  
+//////////////////////////////
+/////////nightlight///////////
+//////////////////////////////
+
+      //reads the input value of the photoresistor
+      //and converts the input value to a voltage
+      //similar to what is done to the thermistor
+      //reading
+  int night_read = (analogRead(Night_in) / 204.6);
+
+        //determines if read voltage is less than threshold value
+        //if it is, it turns the nightlight on
   if(night_read < light_threshold){
-
     digitalWrite(Night_pin, HIGH); 
-
   }
+  
+        //if the read voltage is not less than the threshold value
+        //the nightlight is turned off
   else{
-
     digitalWrite(Night_pin, LOW);
-    
   }
 
 
+
+////////////////////////////
+///////motion sensor////////
+////////////////////////////
+
+        //if motion sensor is armed, read from sensor
   if(armed){
 
-    int motion_read = analogRead(Motion_in);
-    //Serial.println(motion_read);
+          //reads the output from the motion sensor and converts
+          //it to its corresponding voltage level similar to the
+          //nightlight and thermistor
+    int motion_read = (analogRead(Motion_in) / 204.6);
+
+          //if the motion sensor reading is above thershold
+          //sound the alarm
     if(motion_read > 660){
 
       //sound alarm
@@ -123,5 +206,12 @@ void loop() {
     
   }
 
-  delay(10);
+        //delays the entire program slightly to 
+        //make things a little smoother
+  delay(10); 
+  
 }
+
+//////////////////////////////////////////////
+////////////////end of program////////////////
+//////////////////////////////////////////////
