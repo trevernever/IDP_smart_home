@@ -4,20 +4,22 @@
 
 //including all external libraries
 #include <SoftwareSerial.h>
+#include <LiquidCrystal_I2C.h>
 
 //defining objects to be used within the code
 SoftwareSerial BTSerial(0,1); // RX , TX
-SoftwareSerial SlaveSerial(12,13); // RX , TX
+//SoftwareSerial SlaveSerial(12,13); // RX , TX
+LiquidCrystal_I2C lcd(0x27,16,4);
 
 //constants - pin numbers
 #define LED_pin 3
 #define Night_pin 4
-#define Night_in A4
-#define Therm_in A5
-#define Motion_in A2
+#define Night_in A3
+#define Therm_in A2
+#define Motion_in A1
 
 //constants - thresholds
-#define light_threshold 3.3f
+#define light_threshold 6.6f
 #define motion_threshold 3.2f
 
 //global variables, things that can change, but must be stored
@@ -33,7 +35,7 @@ void setup() {
 
 //setting up the objects for use later in the code
   Serial.begin(9600);
-  SlaveSerial.begin(9600);
+  //SlaveSerial.begin(9600);
   BTSerial.begin(9600);
 
 //setting pinmode, output or input
@@ -42,6 +44,11 @@ void setup() {
   pinMode(Night_in, INPUT);
   pinMode(Therm_in, INPUT);
   pinMode(Motion_in, INPUT);
+
+  lcd.init();
+  lcd.backlight();
+  lcd.print("Hello World!");
+  lcd.noCursor();
 
 }
 
@@ -61,8 +68,6 @@ String BT_comm;
 String Slave_comm;
 String To_Slave_comm;
 
-
-
 ///////////////////////
 ////master board///////
 ///////////////////////
@@ -74,7 +79,9 @@ String To_Slave_comm;
   }
 //determines if data was received
   if(To_Slave_comm.length() > 0){
-    SlaveSerial.print(To_Slave_comm); //sends the data to slave board
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(To_Slave_comm);
   }
 
 
@@ -84,14 +91,14 @@ String To_Slave_comm;
 ///////////////////////
 
 //loops while data is avaliable from the slave arduino
-  while(SlaveSerial.available()){
-    delay(10);
-    Slave_comm += SlaveSerial.read(); //retreives data from the slave arduino
-  }
+  //while(SlaveSerial.available()){
+    //delay(10);
+    //Slave_comm += SlaveSerial.read(); //retreives data from the slave arduino
+  //}
 //determines if data was recieved from the slave board
-  if(Slave_comm.length() > 0){
-    Serial.println(Slave_comm); //prints the data from the slave board
-  }
+  //if(Slave_comm.length() > 0){
+    //Serial.println(Slave_comm); //prints the data from the slave board
+  //}
 
 
 
@@ -151,8 +158,8 @@ String To_Slave_comm;
     if(Temperature != oldTemp){
 
       oldTemp = Temperature; //stores changed temperature value
-      String ret = String(Temperature,0) + "C"; //creates string to send to bluetooth board
-      BTSerial.print(ret); //sends new temperature to bluetooth board
+      //String ret = String(Temperature,0) + "C"; //creates string to send to bluetooth board
+      //BTSerial.print(ret); //sends new temperature to bluetooth board
       
     }
     
@@ -208,7 +215,7 @@ String To_Slave_comm;
 
         //delays the entire program slightly to 
         //make things a little smoother
-  delay(10); 
+  //delay(10);
   
 }
 
