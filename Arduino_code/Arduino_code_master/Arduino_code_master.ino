@@ -122,7 +122,7 @@ String BT_comm;
       //by 204.6 will convert this value to its corresponding voltage
       //reading
   float therm_read = (analogRead(Therm_in) / 204.6);
-
+  
         //minimum output of thermistor is 0.1, if lower, something is wrong
         //makes sure the read value is acceptable
   if(therm_read >= 0.1){
@@ -130,6 +130,8 @@ String BT_comm;
           //converts voltage reading to a temperature
           //equation taken from graph in thermistor datasheet
     int Temperature = (int)((therm_read - 0.5) * 100);
+
+    Serial.print(Temperature);
 
           //determines if temperature has changed (whole numbers)
     if(Temperature != oldTemp){
@@ -203,10 +205,15 @@ String BT_comm;
 ////////////LCD/////////////
 ////////////////////////////
 
+  int Farenheight = (int)( (oldTemp) / ( 5 / 9 ) ) + 32;
+
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.print(oldTemp);
-  lcd.write(0xFD);
+  lcd.write(0xDF);
+  lcd.print("C  ");
+  lcd.print(Farenheight);
+  lcd.write(0xDF);
   lcd.print("F");
   if(armed){
 
