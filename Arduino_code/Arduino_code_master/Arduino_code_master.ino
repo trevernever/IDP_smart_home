@@ -19,7 +19,7 @@ LiquidCrystal_I2C lcd(0x27,16,4);
 #define Motion_in A1
 
 //constants - thresholds
-#define light_threshold 6.6f
+#define light_threshold 3.3f
 #define motion_threshold 3.2f
 
 //global variables, things that can change, but must be stored
@@ -91,14 +91,14 @@ String To_Slave_comm;
 ///////////////////////
 
 //loops while data is avaliable from the slave arduino
-  //while(SlaveSerial.available()){
-    //delay(10);
-    //Slave_comm += SlaveSerial.read(); //retreives data from the slave arduino
-  //}
+//  while(SlaveSerial.available()){
+//    delay(10);
+//    Slave_comm += SlaveSerial.read(); //retreives data from the slave arduino
+//  }
 //determines if data was recieved from the slave board
-  //if(Slave_comm.length() > 0){
-    //Serial.println(Slave_comm); //prints the data from the slave board
-  //}
+//  if(Slave_comm.length() > 0){
+//    Serial.println(Slave_comm); //prints the data from the slave board
+//  }
 
 
 
