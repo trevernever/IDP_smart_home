@@ -206,7 +206,8 @@ String BT_comm;
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.print(oldTemp);
-  lcd.print(0xFD);
+  lcd.write(0xFD);
+  lcd.print("F");
   if(armed){
 
     lcd.setCursor(3,1);
@@ -219,13 +220,12 @@ String BT_comm;
     lcd.print("System: disarmed");
     
   }
-  
   lcd.setCursor(6,3);
   lcd.print("No Audio");
 
         //delays the entire program slightly to 
         //make things a little smoother
-  //delay(10);
+  delay(1000);
   
 }
 
