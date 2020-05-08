@@ -48,7 +48,6 @@ void setup() {
 
   lcd.init();
   lcd.backlight();
-  lcd.print("Hello World!");
   lcd.noCursor();
 
 }
@@ -76,8 +75,6 @@ String BT_comm;
     delay(10);
     BT_comm += BTSerial.read(); //receives data from blutooth board
   }
-
-
 
 ////////////////////////////
 //blutooth command actions//
@@ -201,6 +198,30 @@ String BT_comm;
     }
     
   }
+
+////////////////////////////
+////////////LCD/////////////
+////////////////////////////
+
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print(oldTemp);
+  lcd.print(0xFD);
+  if(armed){
+
+    lcd.setCursor(3,1);
+    lcd.print("System: armed");
+    
+  }
+  else{
+
+    lcd.setCursor(2,1);
+    lcd.print("System: disarmed");
+    
+  }
+  
+  lcd.setCursor(6,3);
+  lcd.print("No Audio");
 
         //delays the entire program slightly to 
         //make things a little smoother
