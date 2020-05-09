@@ -24,7 +24,7 @@ LiquidCrystal_I2C lcd(0x27,16,4);
 #define motion_threshold 3.2f
 
 //global variables, things that can change, but must be stored
-int setTemp = 70;
+int setTemp = 69;
 int oldTemp = 0;
 bool armed = false;
 
@@ -141,7 +141,7 @@ String BT_comm;
 
   int Farenheight = (int)( ((float)oldTemp) / ( 5.0 / 9.0 )  + 32.0);
   
-  if(setTemp >= oldTemp){
+  if(setTemp <= oldTemp){
 
     digitalWrite(AC_pin, HIGH);
     
