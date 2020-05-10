@@ -26,6 +26,8 @@ LiquidCrystal_I2C lcd(0x27,16,4);
 //global variables, things that can change, but must be stored
 int setTemp = 22;
 int Temperature = 21;
+int hour = 12;
+int minute = 12;
 int counter = 0;
 bool armed = false;
 bool intruder = false;
@@ -79,6 +81,8 @@ String BT_comm;
     BT_comm += ((char)BTSerial.read()); //receives data from blutooth board
   }
 
+  
+
 ////////////////////////////
 //bluetooth command actions/
 ////////////////////////////
@@ -104,6 +108,13 @@ String BT_comm;
     String s = BT_comm.substring(3);
     armed = (s == "true");
     //Serial.println(armStatus);
+  }
+
+  else if (BT_comm.substring(0, 1) == "c") {
+    String s = BT_comm.substring(1);
+    hour = s.substring(0, 2).toInt();
+    minute = s.substring(3).toInt();
+    Serial.print(BT_comm);
   }
 
   // play songs
@@ -189,6 +200,8 @@ String BT_comm;
     if(motion_read > motion_threshold){
 
       //sound alarm
+      tone(5,2000,100);
+      delay(50);
       intruder = true;
       aud = 4;
        
@@ -200,7 +213,7 @@ String BT_comm;
 ////////////LCD/////////////
 ////////////////////////////
 
-  if( (counter % 100) == 0 ){
+  if( (counter % 20) == 0 ){
 
     lcd.clear();
     lcd.setCursor(0,0);
@@ -212,6 +225,11 @@ String BT_comm;
     lcd.print(Farenheight);
     lcd.write(0xDF);
     lcd.print("F");
+
+    lcd.setCursor(15,0);
+    lcd.print(hour);
+    lcd.print(":");
+    lcd.print(minute);
     
     if(armed){
 
@@ -280,7 +298,7 @@ String BT_comm;
 
     String temp = String(Temperature);
 
-    String night_s = (night_read < light_threshold) ? "on" : "off";
+    String night_s = (night_read < light_threshold) ? "t" : "f";
 
     String intruderStatus = (intruder) ? "t" : "f"; // t or f
 
@@ -288,10 +306,16 @@ String BT_comm;
 
     output = temp + '*' + night_s + '*' + intruderStatus + '*' +  armedStatus + '*';
 
-    Serial.println(output);
+    Serial.print(output);
 
     intruder = false;
 
+    if( aud == 4){
+
+      aud = 0;
+      
+    }
+    
   }
         //delays the entire program slightly to 
         //make things a little smoother
