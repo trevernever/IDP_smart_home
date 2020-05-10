@@ -24,9 +24,12 @@ LiquidCrystal_I2C lcd(0x27,16,4);
 #define motion_threshold 3.2f
 
 //global variables, things that can change, but must be stored
-int setTemp = 70;
-int oldTemp = 0;
+int setTemp = 22;
+int Temperature = 21;
+int counter = 0;
 bool armed = false;
+bool intruder = false;
+int aud = 0;
 
 ///////////////////////////////////////////////
 ///////////////Section 2 set up////////////////
@@ -73,40 +76,50 @@ String BT_comm;
 //loops while data is available from the bluetooth board
   while(BTSerial.available()){
     delay(10);
-    BT_comm += BTSerial.read(); //receives data from blutooth board
+    BT_comm += ((char)BTSerial.read()); //receives data from blutooth board
   }
 
 ////////////////////////////
-//blutooth command actions//
+//bluetooth command actions/
 ////////////////////////////
 
-//if received string is "on" turn light on
-  if(BT_comm == "on"){
-    Serial.println(BT_comm);
+  // LED enable
+   if(BT_comm == "on"){
     digitalWrite(House_pin, HIGH);
-  }
-  
-//if received string is "off" turn light off
+  } 
+
+  // LED disable
   else if(BT_comm == "off"){
-    Serial.println(BT_comm);
     digitalWrite(House_pin,LOW);
   }
 
-  else if(BT_comm == "true"){
-    Serial.println(BT_comm);
-    armed = true;
+  // target temperature command
+  else if (BT_comm.substring(0, 4) == "temp") {
+    setTemp = BT_comm.substring(4).toInt();
+    //Serial.println(targetTemp);
   }
 
-  else if(BT_comm == "false"){
-    Serial.println(BT_comm);
-    armed = false;
+  // Set intruder alert status
+  else if (BT_comm.substring(0, 3) == "arm") {
+    String s = BT_comm.substring(3);
+    armed = (s == "true");
+    //Serial.println(armStatus);
   }
 
-  else if( is_number(BT_comm) ){
+  // play songs
+  else if (BT_comm == "Song1") {
+    //Serial.println("play Song1");
+    aud = 1;
+  }
 
-    Serial.println(BT_comm);
-    setTemp = BT_comm.toInt();
-    
+  else if (BT_comm == "Song2") {
+    // play song2
+    aud = 2;
+  }
+
+  else if (BT_comm == "Song3") {
+    // play song3
+    aud = 3;
   }
 
 ////////////////////////////////////////////////////////
@@ -129,31 +142,11 @@ String BT_comm;
 
           //converts voltage reading to a temperature
           //equation taken from graph in thermistor datasheet
-    int Temperature = (int)((therm_read - 0.5) * 100);
+    Temperature = (int)((therm_read - 0.5) * 100);
 
-    Serial.print(Temperature);
-
-          //determines if temperature has changed (whole numbers)
-    if(Temperature != oldTemp){
-
-      oldTemp = Temperature; //stores changed temperature value
-      //String ret = String(Temperature,0) + "C"; //creates string to send to bluetooth board
-      //BTSerial.print(ret); //sends new temperature to bluetooth board
-      
-    }
-    
   }
 
-  if(setTemp >= oldTemp){
-
-    digitalWrite(AC_pin, HIGH);
-    
-  }
-  else{
-
-    digitalWrite(AC_pin, LOW);
-    
-  }
+  int Farenheight = (int)( ((float)Temperature) / ( 5.0 / 9.0 )  + 32.0);
   
 //////////////////////////////
 /////////nightlight///////////
@@ -189,13 +182,15 @@ String BT_comm;
           //reads the output from the motion sensor and converts
           //it to its corresponding voltage level similar to the
           //nightlight and thermistor
-    int motion_read = (analogRead(Motion_in) / 204.6);
+    float motion_read = (analogRead(Motion_in) / 204.6);
 
-          //if the motion sensor reading is above thershold
+          //if the motion sensor reading is above threshold
           //sound the alarm
-    if(motion_read > 660){
+    if(motion_read > motion_threshold){
 
       //sound alarm
+      intruder = true;
+      aud = 4;
        
     }
     
@@ -205,58 +200,103 @@ String BT_comm;
 ////////////LCD/////////////
 ////////////////////////////
 
-  int Farenheight = (int)( (oldTemp) / ( 5 / 9 ) ) + 32;
+  if( (counter % 100) == 0 ){
 
-  lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print(oldTemp);
-  lcd.write(0xDF);
-  lcd.print("C  ");
-  lcd.print(Farenheight);
-  lcd.write(0xDF);
-  lcd.print("F");
-  if(armed){
-
-    lcd.setCursor(3,1);
-    lcd.print("System: armed");
+    lcd.clear();
+    lcd.setCursor(0,0);
     
-  }
-  else{
-
-    lcd.setCursor(2,1);
-    lcd.print("System: disarmed");
+    lcd.print(Temperature);
+    lcd.write(0xDF);
+    lcd.print("C  ");
     
-  }
-  lcd.setCursor(6,3);
-  lcd.print("No Audio");
-
-        //delays the entire program slightly to 
-        //make things a little smoother
-  delay(1000);
-  
-}
-
-bool is_number(String test){
-  
-    int i; 
-
-    int size = test.length();
-    char buffer[size];
-
-    test.toCharArray(buffer, size);
+    lcd.print(Farenheight);
+    lcd.write(0xDF);
+    lcd.print("F");
     
-    for( i = 0; i < size; i++ ){
+    if(armed){
 
-      if(!isdigit(buffer[i])){
+      lcd.setCursor(3,1);
+      lcd.print("System: armed");
+    
+    }
+    else{
 
-        return false;
-        
-      }
+      lcd.setCursor(2,1);
+      lcd.print("System: disarmed");
+    
+    }
+
+    switch(aud){
+
+      case 1:
+        lcd.setCursor(7,3);
+        lcd.print("Song 1");
+        break;
+
+      case 2:
+        lcd.setCursor(7,3);
+        lcd.print("Song 2");
+        break;
+
+      case 3:
+        lcd.setCursor(7,3);
+        lcd.print("Song 3");
+        break;
+
+      case 4:
+        lcd.setCursor(7,3);
+        lcd.print("Alarm!");
+        break;
+
+      default:
+        lcd.setCursor(6,3);
+        lcd.print("No Audio");
       
     }
-    
-    return true;
 
+    if(setTemp <= Temperature){
+      digitalWrite(AC_pin, HIGH);
+    }
+    else{
+      digitalWrite(AC_pin, LOW);
+    }
+
+}
+
+////////////////////////////
+//////////sending///////////
+////////////////////////////
+
+  counter++;
+
+  if (counter >= 200){
+    counter = 0;
+  }
+
+  if( counter == 0 ){
+
+    // Send data to phone
+    String output = "";
+
+    String temp = String(Temperature);
+
+    String night_s = (night_read < light_threshold) ? "on" : "off";
+
+    String intruderStatus = (intruder) ? "t" : "f"; // t or f
+
+    String armedStatus = (armed) ? "t" : "f"; // t or f
+
+    output = temp + '*' + night_s + '*' + intruderStatus + '*' +  armedStatus + '*';
+
+    Serial.println(output);
+
+    intruder = false;
+
+  }
+        //delays the entire program slightly to 
+        //make things a little smoother
+  delay(10);
+  
 }
 
 //////////////////////////////////////////////
